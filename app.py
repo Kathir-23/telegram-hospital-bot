@@ -3,7 +3,8 @@ import requests
 import re
 
 # ---------------- CONFIG ----------------
-TOKEN = "8538531775:AAGI0KQC4EdPfQPuMxBW6Y0J2lYHGr8VxF0"
+import os
+TOKEN = os.getenv("8538531775:AAFoXlAUk7WncLqdOoX8t-hGYLfpuO82ALs")
 
 GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxVCBVeH3NbHfS6Ex_PLPP4Rl45MTvS8X79CH3x_2rG03Og1_qbbRIIbn0Cb48oZEu-Pg/exec"
 
