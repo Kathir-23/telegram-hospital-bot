@@ -4,9 +4,12 @@ import re
 
 # ---------------- CONFIG ----------------
 import os
-TOKEN = os.getenv("8538531775:AAFoXlAUk7WncLqdOoX8t-hGYLfpuO82ALs")
-print("TOKEN VALUE:", TOKEN)
+#TOKEN = os.getenv("8538531775:AAFoXlAUk7WncLqdOoX8t-hGYLfpuO82ALs")
+#print("TOKEN VALUE:", TOKEN)
 
+
+TOKEN = os.getenv("TOKEN")
+print("TOKEN VALUE:", TOKEN)
 GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxVCBVeH3NbHfS6Ex_PLPP4Rl45MTvS8X79CH3x_2rG03Og1_qbbRIIbn0Cb48oZEu-Pg/exec"
 
 # ---------------------------------------
