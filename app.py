@@ -1,15 +1,12 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import requests
 import re
+import os
 
 # ---------------- CONFIG ----------------
-import os
-#TOKEN = os.getenv("8538531775:AAFoXlAUk7WncLqdOoX8t-hGYLfpuO82ALs")
-#print("TOKEN VALUE:", TOKEN)
-
-
 TOKEN = os.getenv("TOKEN")
-print("TOKEN VALUE:", TOKEN)
+print("🔑 TOKEN LOADED:", "YES" if TOKEN else "NO")
+
 GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxVCBVeH3NbHfS6Ex_PLPP4Rl45MTvS8X79CH3x_2rG03Og1_qbbRIIbn0Cb48oZEu-Pg/exec"
 
 # ---------------------------------------
@@ -20,6 +17,10 @@ user_data = {}
 # ---------- START ----------
 def start(update, context):
     chat_id = update.message.chat_id
+    user = update.message.from_user
+
+    print(f"🚀 /start pressed | user_id={user.id} | user_name={user.first_name}")
+
     user_state[chat_id] = "language"
     user_data[chat_id] = {}
 
@@ -34,6 +35,7 @@ def start(update, context):
 def handle_message(update, context):
     chat_id = update.message.chat_id
     text = update.message.text.strip()
+    user = update.message.from_user
 
     state = user_state.get(chat_id, "language")
 
@@ -84,6 +86,9 @@ def handle_message(update, context):
             user_data[chat_id]["dept"] = departments[text]
             user_data[chat_id]["doctor"] = "Dr. Kumar"
             user_state[chat_id] = "date"
+
+            print(f"🏥 Department selected: {departments[text]} | user_id={user.id}")
+
             update.message.reply_text(
                 "Doctor: Dr. Kumar\n"
                 "Enter date (DD-MM-YYYY)"
@@ -96,6 +101,9 @@ def handle_message(update, context):
         if re.match(r"\d{2}-\d{2}-\d{4}", text):
             user_data[chat_id]["date"] = text
             user_state[chat_id] = "time"
+
+            print(f"📅 Date received: {text} | user_id={user.id}")
+
             update.message.reply_text(
                 "Select Time:\n"
                 "1️⃣ 9-10\n"
@@ -103,7 +111,7 @@ def handle_message(update, context):
                 "3️⃣ 11-12"
             )
         else:
-            update.message.reply_text("Invalid date format")
+            update.message.reply_text("Invalid date format (use DD-MM-YYYY)")
 
     # ---------- TIME ----------
     elif state == "time":
@@ -116,6 +124,8 @@ def handle_message(update, context):
             user_data[chat_id]["time"] = time_slots[text]
             d = user_data[chat_id]
 
+            print(f"🕒 Time selected: {d['time']} | user_id={user.id}")
+
             payload = {
                 "date": d["date"],
                 "department": d["dept"],
@@ -123,11 +133,11 @@ def handle_message(update, context):
                 "time": d["time"]
             }
 
-            # ✅ STEP 5 — SEND DATA TO GOOGLE SHEET (CORRECT WAY)
             try:
                 requests.get(GOOGLE_URL, params=payload, timeout=10)
+                print("✅ Appointment successfully saved to Google Sheet")
             except Exception as e:
-                print("Google Sheet Error:", e)
+                print("❌ Google Sheet Error:", e)
 
             update.message.reply_text(
                 "✅ Appointment Confirmed\n\n"
@@ -144,6 +154,10 @@ def handle_message(update, context):
 
 # ---------- MAIN ----------
 def main():
+    if not TOKEN:
+        print("❌ BOT TOKEN NOT FOUND")
+        return
+
     updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
