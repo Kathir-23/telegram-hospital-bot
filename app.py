@@ -9,7 +9,6 @@ print("🔑 TOKEN LOADED:", "YES" if TOKEN else "NO")
 
 GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxVCBVeH3NbHfS6Ex_PLPP4Rl45MTvS8X79CH3x_2rG03Og1_qbbRIIbn0Cb48oZEu-Pg/exec"
 
-# 🔔 ADMIN CHAT ID (REPLACE WITH YOUR ID)
 ADMIN_CHAT_ID = 1335030495
 # ---------------------------------------
 
@@ -44,7 +43,6 @@ def handle_message(update, context):
     # ---------- LANGUAGE ----------
     if state == "language":
         if text == "1":
-            user_data[chat_id]["lang"] = "en"
             user_state[chat_id] = "menu"
             update.message.reply_text(
                 "Main Menu:\n"
@@ -52,7 +50,6 @@ def handle_message(update, context):
                 "2️⃣ Hospital Timings"
             )
         elif text == "2":
-            user_data[chat_id]["lang"] = "ta"
             user_state[chat_id] = "menu"
             update.message.reply_text(
                 "முதன்மை பட்டியல்:\n"
@@ -99,8 +96,8 @@ def handle_message(update, context):
     elif state == "date":
         if re.match(r"\d{2}-\d{2}-\d{4}", text):
             user_data[chat_id]["date"] = text
-            user_state[chat_id] = "time"
             print(f"📅 Date received: {text}")
+            user_state[chat_id] = "time"
             update.message.reply_text(
                 "Select Time:\n"
                 "1️⃣ 9-10\n"
@@ -108,7 +105,7 @@ def handle_message(update, context):
                 "3️⃣ 11-12"
             )
         else:
-            update.message.reply_text("Invalid date format (DD-MM-YYYY)")
+            update.message.reply_text("❌ Invalid date format (DD-MM-YYYY)")
 
     # ---------- TIME ----------
     elif state == "time":
@@ -128,24 +125,13 @@ def handle_message(update, context):
                 "time": d["time"]
             }
 
-            # ---- GOOGLE SHEET SAVE ----
             try:
                 requests.get(GOOGLE_URL, params=payload, timeout=10)
                 print("✅ Appointment successfully saved to Google Sheet")
             except Exception as e:
                 print("❌ Google Sheet Error:", e)
 
-            # ---- USER CONFIRMATION ----
-            update.message.reply_text(
-                "✅ Appointment Confirmed\n\n"
-                f"🏥 {d['dept']}\n"
-                f"👨‍⚕️ {d['doctor']}\n"
-                f"📅 {d['date']}\n"
-                f"🕒 {d['time']}"
-            )
-
-            # ---- ADMIN MESSAGE (YOUR FORMAT) ----
-            admin_message = (
+            final_message = (
                 "🆕 New Appointment Booked\n\n"
                 f"👤 User: {user.first_name}\n"
                 f"🆔 User ID: {user.id}\n\n"
@@ -155,7 +141,13 @@ def handle_message(update, context):
                 f"🕒 Time: {d['time']}"
             )
 
-            context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message)
+          # Send to USER
+update.message.reply_text(final_message)
+
+# Send to ADMIN only if different
+if user.id != ADMIN_CHAT_ID:
+    context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=final_message)
+
 
             user_state[chat_id] = "language"
             user_data.pop(chat_id, None)
