@@ -6,7 +6,8 @@ import os
 # ================= CONFIG =================
 TOKEN = os.getenv("TOKEN")
 ADMIN_CHAT_ID = 1335030495  # YOUR TELEGRAM ID
-GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxVCBVeH3NbHfS6Ex_PLPP4Rl45MTvS8X79CH3x_2rG03Og1_qbbRIIbn0Cb48oZEu-Pg/exec"
+GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwdjMKXdkRACM2TuGwlSRkhcsGi1-Dlv7Txcf5329pjHlS67U-UuPsBhueby8jFC4o57A/exec"
+
 # =========================================
 
 print("🔑 TOKEN LOADED:", "YES" if TOKEN else "NO")
