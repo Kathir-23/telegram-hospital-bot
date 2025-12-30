@@ -6,7 +6,8 @@ import os
 # ================= CONFIG =================
 TOKEN = os.getenv("TOKEN")
 ADMIN_CHAT_ID = 1335030495  # YOUR TELEGRAM ID
-GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwdjMKXdkRACM2TuGwlSRkhcsGi1-Dlv7Txcf5329pjHlS67U-UuPsBhueby8jFC4o57A/exec"
+GOOGLE_URL = "https://script.google.com/macros/s/AKfycby8O2lJJ2yjUv52Peu7W1qmSRHU4Gw12_ll60fTCWEVgBhNCnxnPDUU16s5oiKrOjZGcg/exec"
+
 
 # =========================================
 
