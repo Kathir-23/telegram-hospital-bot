@@ -6,9 +6,7 @@ import os
 # ================= CONFIG =================
 TOKEN = os.getenv("TOKEN")
 ADMIN_CHAT_ID = 1335030495  # YOUR TELEGRAM ID
-GOOGLE_URL = "https://script.google.com/macros/s/AKfycby8O2lJJ2yjUv52Peu7W1qmSRHU4Gw12_ll60fTCWEVgBhNCnxnPDUU16s5oiKrOjZGcg/exec"
-
-
+GOOGLE_URL = "https://script.google.com/macros/s/AKfycbyQX1Blt_rH7JCfFDp4dcQEaErjWuZmad72nxfoeBSa31750msjYDLz739oarics3uA/exec"
 # =========================================
 
 print("🔑 TOKEN LOADED:", "YES" if TOKEN else "NO")
@@ -52,7 +50,6 @@ def handle_message(update, context):
             )
 
         elif text == "2":
-            # CANCEL APPOINTMENT
             payload = {
                 "action": "cancel",
                 "user_id": user.id
@@ -61,17 +58,12 @@ def handle_message(update, context):
             r = requests.get(GOOGLE_URL, params=payload)
             print("❌ Cancel response:", r.text)
 
-            if "CANCELLED" in r.text:
-                cancel_msg = (
-                    "❌ Appointment Cancelled\n\n"
-                    f"👤 User: {user.first_name}\n"
-                    f"🆔 ID: {user.id}"
-                )
-
-                update.message.reply_text(cancel_msg)
+            if r.text == "CANCELLED":
+                msg = "❌ Your appointment has been cancelled."
+                update.message.reply_text(msg)
 
                 if user.id != ADMIN_CHAT_ID:
-                    context.bot.send_message(ADMIN_CHAT_ID, cancel_msg)
+                    context.bot.send_message(ADMIN_CHAT_ID, msg)
 
             else:
                 update.message.reply_text("⚠️ No active appointment found")
@@ -93,8 +85,8 @@ def handle_message(update, context):
             user_state[chat_id] = "date"
 
             update.message.reply_text(
-                f"Doctor: Dr. Kumar\n"
-                f"Enter Date (DD-MM-YYYY)"
+                "Doctor: Dr. Kumar\n"
+                "Enter Date (DD-MM-YYYY)"
             )
         else:
             update.message.reply_text("Invalid department")
@@ -103,9 +95,8 @@ def handle_message(update, context):
     elif state == "date":
         if re.match(r"\d{2}-\d{2}-\d{4}", text):
             user_data[chat_id]["date"] = text
-            print(f"📅 Date received: {text}")
-
             user_state[chat_id] = "time"
+
             update.message.reply_text(
                 "Select Time:\n"
                 "1️⃣ 9-10\n"
@@ -113,7 +104,7 @@ def handle_message(update, context):
                 "3️⃣ 11-12"
             )
         else:
-            update.message.reply_text("❌ Invalid date format (DD-MM-YYYY)")
+            update.message.reply_text("❌ Invalid date format")
 
     # ---------- TIME ----------
     elif state == "time":
@@ -137,27 +128,41 @@ def handle_message(update, context):
                 "time": d["time"]
             }
 
-            requests.get(GOOGLE_URL, params=payload)
-            print("✅ Appointment saved")
+            r = requests.get(GOOGLE_URL, params=payload)
+            print("📡 Booking response:", r.text)
 
-            # SAME MESSAGE FOR USER & ADMIN
-            confirmation_msg = (
-                "🆕 Appointment Booked\n\n"
-                f"👤 User: {user.first_name}\n"
-                f"🆔 User ID: {user.id}\n\n"
-                f"🏥 Department: {d['department']}\n"
-                f"👨‍⚕️ Doctor: {d['doctor']}\n"
-                f"📅 Date: {d['date']}\n"
-                f"🕒 Time: {d['time']}"
-            )
+            # ===== SLOT ALREADY BOOKED =====
+            if r.text == "SLOT_TAKEN":
+                update.message.reply_text(
+                    "⛔ This time slot is already booked.\n\n"
+                    "Please choose another time."
+                )
+                user_state[chat_id] = "time"
+                return
 
-            update.message.reply_text(confirmation_msg)
+            # ===== BOOKED SUCCESSFULLY =====
+            if r.text == "BOOKED":
+                confirmation_msg = (
+                    "🆕 Appointment Booked\n\n"
+                    f"👤 User: {user.first_name}\n"
+                    f"🆔 User ID: {user.id}\n\n"
+                    f"🏥 Department: {d['department']}\n"
+                    f"👨‍⚕️ Doctor: {d['doctor']}\n"
+                    f"📅 Date: {d['date']}\n"
+                    f"🕒 Time: {d['time']}"
+                )
 
-            if user.id != ADMIN_CHAT_ID:
-                context.bot.send_message(ADMIN_CHAT_ID, confirmation_msg)
+                update.message.reply_text(confirmation_msg)
 
-            user_state[chat_id] = "menu"
-            user_data.pop(chat_id, None)
+                if user.id != ADMIN_CHAT_ID:
+                    context.bot.send_message(ADMIN_CHAT_ID, confirmation_msg)
+
+                user_state[chat_id] = "menu"
+                user_data.pop(chat_id, None)
+                return
+
+            # ===== UNKNOWN ERROR =====
+            update.message.reply_text("⚠️ Something went wrong. Try again later.")
 
         else:
             update.message.reply_text("Invalid time selection")
