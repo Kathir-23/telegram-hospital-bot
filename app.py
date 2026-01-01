@@ -1,13 +1,12 @@
-this is the app script code ........from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import requests
 import re
 import os
 
 # ================= CONFIG =================
-TOKEN = os.getenv("TOKEN")  # Telegram Bot Token
-ADMIN_CHAT_ID = 1335030495  # Your Telegram ID
-
-GOOGLE_URL = "https://script.google.com/macros/s/AKfycbzOLMQMo7qSA5HOUAgcCV94Hb2vOuskvF0aeIFmp155H43s3ADY7XeoDyc_Wi0giK5aQA/exec"
+TOKEN = os.getenv("TOKEN")
+ADMIN_CHAT_ID = 1335030495  # YOUR TELEGRAM ID
+GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxmwZHpnV6Nu5Y14Eit815iFbjkD_5b2TRWgK7i52nGrDrTUVWX9DTNhQ3TX7Xo6uVRdg/exec"
 # =========================================
 
 print("🔑 TOKEN LOADED:", "YES" if TOKEN else "NO")
@@ -19,6 +18,8 @@ user_data = {}
 def start(update, context):
     user = update.message.from_user
     chat_id = update.message.chat_id
+
+    print(f"🚀 /start pressed | user_id={user.id} | user_name={user.first_name}")
 
     user_state[chat_id] = "menu"
     user_data[chat_id] = {}
@@ -55,6 +56,7 @@ def handle_message(update, context):
             }
 
             r = requests.get(GOOGLE_URL, params=payload)
+            print("❌ Cancel response:", r.text)
 
             if r.text == "CANCELLED":
                 msg = "❌ Your appointment has been cancelled."
@@ -62,6 +64,7 @@ def handle_message(update, context):
 
                 if user.id != ADMIN_CHAT_ID:
                     context.bot.send_message(ADMIN_CHAT_ID, msg)
+
             else:
                 update.message.reply_text("⚠️ No active appointment found")
 
@@ -82,8 +85,8 @@ def handle_message(update, context):
             user_state[chat_id] = "date"
 
             update.message.reply_text(
-                "👨‍⚕️ Doctor: Dr. Kumar\n"
-                "📅 Enter Date (DD-MM-YYYY)"
+                "Doctor: Dr. Kumar\n"
+                "Enter Date (DD-MM-YYYY)"
             )
         else:
             update.message.reply_text("Invalid department")
@@ -95,13 +98,13 @@ def handle_message(update, context):
             user_state[chat_id] = "time"
 
             update.message.reply_text(
-                "Select Time Slot:\n"
+                "Select Time:\n"
                 "1️⃣ 9-10\n"
                 "2️⃣ 10-11\n"
                 "3️⃣ 11-12"
             )
         else:
-            update.message.reply_text("❌ Invalid date format (DD-MM-YYYY)")
+            update.message.reply_text("❌ Invalid date format")
 
     # ---------- TIME ----------
     elif state == "time":
@@ -126,9 +129,10 @@ def handle_message(update, context):
             }
 
             r = requests.get(GOOGLE_URL, params=payload)
+            print("📡 Booking response:", r.text)
 
             # ===== SLOT ALREADY BOOKED =====
-            if r.text == "SLOT_ALREADY_BOOKED":
+            if r.text == "SLOT_TAKEN":
                 update.message.reply_text(
                     "⛔ This time slot is already booked.\n\n"
                     "Please choose another time."
@@ -136,7 +140,7 @@ def handle_message(update, context):
                 user_state[chat_id] = "time"
                 return
 
-            # ===== BOOKED SUCCESS =====
+            # ===== BOOKED SUCCESSFULLY =====
             if r.text == "BOOKED":
                 confirmation_msg = (
                     "🆕 Appointment Booked\n\n"
@@ -157,6 +161,7 @@ def handle_message(update, context):
                 user_data.pop(chat_id, None)
                 return
 
+            # ===== UNKNOWN ERROR =====
             update.message.reply_text("⚠️ Something went wrong. Try again later.")
 
         else:
